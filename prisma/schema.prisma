@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String?
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  payments  Payment[]
+  receipts  Receipt[]
+}
+
+model Client {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String?   @unique
+  phone     String?
+  address   String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  receipts  Receipt[]
+}
+
+model Payment {
+  id                Int               @id @default(autoincrement())
+  userId            Int
+  user              User              @relation(fields: [userId], references: [id])
+  amount            Float
+  currency          String            @default("BRL")
+  status            PaymentStatus     @default(pending)
+  paymentMethodType PaymentMethodType
+  description       String?
+  transactionId     String?           @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+}
+
+enum PaymentMethodType {
+  credit_card
+  pix
+  bank_transfer
+}
+
+model Receipt {
+  id            Int                   @id @default(autoincrement())
+  userId        Int
+  user          User                  @relation(fields: [userId], references: [id])
+  clientId      Int
+  client        Client                @relation(fields: [clientId], references: [id])
+  amount        Float
+  currency      String                @default("BRL")
+  receivedDate  DateTime
+  status        ReceiptStatus         @default(pending)
+  description   String?
+  paymentMethod ReceiptPaymentMethod?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+enum ReceiptStatus {
+  pending
+  completed
+  cancelled
+}
+
+enum ReceiptPaymentMethod {
+  credit_card
+  pix
+  bank_transfer
+  cash
+  other
+}
